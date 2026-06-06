@@ -21,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       UPSTREAM_REPO_URL: https://github.com/nesquena/hermes-webui.git
-      # Optional repository/org variable override, e.g. "yourname/hermes-webui".
-      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+      # Fixed publish target image.
+      DOCKERHUB_IMAGE: difyz9/hermes-webui
 
     steps:
       - name: Resolve latest upstream tag
@@ -47,15 +47,9 @@ jobs:
       - name: Resolve Docker Hub image name
         id: image
         shell: bash
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           set -euo pipefail
-          if [[ -z "${DOCKERHUB_USERNAME:-}" ]]; then
-            echo "::error::Missing required secret: DOCKERHUB_USERNAME"
-            exit 1
-          fi
-          IMAGE="${DOCKERHUB_IMAGE:-${DOCKERHUB_USERNAME}/hermes-webui}"
+          IMAGE="${DOCKERHUB_IMAGE}"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "Using Docker image: $IMAGE"
 
