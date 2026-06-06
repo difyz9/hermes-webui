@@ -1,7 +1,9 @@
 # Two-container Docker Compose: Hermes Agent + Hermes WebUI
 #
 # QUICK START:
-#   docker compose -f docker-compose.two-container.yml up -d
+#   cp .env.example .env
+#   docker compose pull
+#   docker compose up -d
 #   Open http://localhost:8787
 #
 # This runs the agent and web UI in separate containers connected via shared
@@ -15,8 +17,7 @@
 #
 # WHEN NOT TO USE THIS:
 #   - You hit "Permission denied" trying to share an existing ~/.hermes directory
-#     → use docker-compose.yml (single-container) instead, OR
-#     → keep this file but switch to NAMED VOLUMES (the default) instead of bind mounts
+#     → check UID/GID in .env and use a dedicated HERMES_WORKSPACE path
 #   - You're on Podman 3.4 or older without keep-id namespace support
 #     → see https://github.com/sunnysktsang/hermes-suite for an all-in-one image
 #
