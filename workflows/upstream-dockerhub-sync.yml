@@ -1,0 +1,109 @@
+name: Upstream Docker Hub Sync
+
+on:
+  push:
+    tags:
+      - 'v*'
+  schedule:
+    # Runs at 01:00 UTC every Saturday.
+    - cron: '0 1 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-dockerhub-sync
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_REPO_URL: https://github.com/nesquena/hermes-webui.git
+      # Optional repository/org variable override, e.g. "yourname/hermes-webui".
+      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+
+    steps:
+      - name: Resolve latest upstream tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="$(git ls-remote --refs --tags "$UPSTREAM_REPO_URL" | awk -F/ '{print $3}' | sort -V | tail -n 1)"
+          if [[ -z "$TAG" ]]; then
+            echo "::error::Could not resolve latest upstream tag from $UPSTREAM_REPO_URL"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved upstream tag: $TAG"
+
+      - name: Clone upstream source at latest tag
+        run: |
+          git clone --depth 1 --branch "${{ steps.tag.outputs.tag }}" "$UPSTREAM_REPO_URL" upstream-src
+
+      - name: Resolve Docker Hub image name
+        id: image
+        shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${DOCKERHUB_USERNAME:-}" ]]; then
+            echo "::error::Missing required secret: DOCKERHUB_USERNAME"
+            exit 1
+          fi
+          IMAGE="${DOCKERHUB_IMAGE:-${DOCKERHUB_USERNAME}/hermes-webui}"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "Using Docker image: $IMAGE"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.image }}
+          tags: |
+            type=raw,value=${{ steps.tag.outputs.tag }}
+            type=raw,value=${{ steps.tag.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./upstream-src
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            HERMES_VERSION=${{ steps.tag.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Publish summary
+        run: |
+          {
+            echo "## Upstream Docker Sync"
+            echo ""
+            echo "- Upstream tag: \\`${{ steps.tag.outputs.tag }}\\`"
+            echo "- Docker image: \\`${{ steps.image.outputs.image }}\\`"
+            echo "- Platforms: \\`linux/amd64, linux/arm64\\`"
+            echo "- Pushed tags:"
+            echo "  - \\`${{ steps.tag.outputs.tag }}\\`"
+            echo "  - \\`${{ steps.tag.outputs.version }}\\`"
+            echo "  - \\`latest\\`"
+          } >> "$GITHUB_STEP_SUMMARY"
