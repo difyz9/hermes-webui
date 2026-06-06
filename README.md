@@ -73,6 +73,13 @@ docker compose --env-file .env -f docker-compose.two-container.yml pull
 docker compose --env-file .env -f docker-compose.two-container.yml up -d
 ```
 
+如果你把 `docker-compose.two-container.yml` 重命名为 `docker-compose.yml`，并且环境文件仍使用默认 `.env`，可以简化为：
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
 启动 three-container：
 
 ```bash
@@ -96,6 +103,14 @@ two-container：
 docker compose --env-file .env -f docker-compose.two-container.yml exec hermes-agent hermes setup
 docker compose --env-file .env -f docker-compose.two-container.yml exec hermes-agent hermes model
 docker compose --env-file .env -f docker-compose.two-container.yml exec hermes-agent hermes tools
+```
+
+如果 two-container 已重命名为 `docker-compose.yml`，对应命令可以简化为：
+
+```bash
+docker compose exec hermes-agent hermes setup
+docker compose exec hermes-agent hermes model
+docker compose exec hermes-agent hermes tools
 ```
 
 three-container：
