@@ -1,6 +1,6 @@
 # hermes-webui Docker Mirror
 
-每日自动跟踪 [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui) 上游仓库的最新 tag，构建多架构 Docker 镜像并推送到 Docker Hub。
+每周自动跟踪 [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui) 上游仓库的最新 tag，构建多架构 Docker 镜像并推送到 Docker Hub。
 
 ## 功能
 
