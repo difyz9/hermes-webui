@@ -28,7 +28,8 @@
 #
 # NOTE ON BIND MOUNTS:
 #   This file uses host bind mounts by default so you can access files directly
-#   on your machine. If needed, override paths with env vars in `.env`.
+#   on your machine. Set HERMES_WORKSPACE in `.env` to control the base
+#   directory, and use its hermes/ and webui/ subdirectories for separation.
 #
 #   BOTH containers must mount the same host paths,
 #   AND your host directory must be readable by UID 1000 (the default). Run:
@@ -49,9 +50,11 @@ services:
       - "127.0.0.1:8642:8642"
     volumes:
       # Persist config, state, sessions, skills, memory across restarts
-      - ${HERMES_HOME_HOST_PATH:-./data/.hermes}:/home/hermes/.hermes
+      - ${HERMES_WORKSPACE:-./data}/hermes/.hermes:/home/hermes/.hermes
       # Expose agent source so the WebUI can install dependencies from it
-      - ${HERMES_AGENT_SRC_HOST_PATH:-./data/herms}:/opt/hermes
+      - ${HERMES_WORKSPACE:-./data}/hermes/src:/opt/hermes
+      - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
+
     environment:
       - HERMES_HOME=/home/hermes/.hermes
       # Align UID/GID across containers sharing the hermes-home volume.
@@ -81,18 +84,14 @@ services:
       - "127.0.0.1:8787:8787"
     volumes:
       # Same hermes home as the agent — shares config, sessions, state
-      - ${HERMES_HOME_HOST_PATH:-./data/.hermes}:/home/hermeswebui/.hermes
+      - ${HERMES_WORKSPACE:-./data}/webui/.hermes:/home/hermeswebui/.hermes
       # Agent source mounted where docker_init.bash expects it.
       # Mounted read-only — the WebUI only reads this volume to install
       # the agent's Python dependencies at startup (`uv pip install`).
       # Read-only enforces that defence-in-depth at the kernel layer.
-      - ${HERMES_AGENT_SRC_HOST_PATH:-./data/herms}:/home/hermeswebui/.hermes/hermes-agent:ro
+      - ${HERMES_WORKSPACE:-./data}/hermes/src:/home/hermeswebui/.hermes/hermes-agent:ro
       # Workspace directory — browse and edit files from the WebUI.
-      # Adapt the host path to your project directory.
-      # Override with: HERMES_WORKSPACE=/your/path docker compose up
-      # ${HOME} is used rather than `~` so the default resolves the same way
-      # across Linux, macOS, WSL2, and Docker Desktop on Windows.
-      - ${HERMES_WORKSPACE:-${HOME}/workspace}:/workspace
+      - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
     environment:
       - HERMES_WEBUI_HOST=0.0.0.0
       - HERMES_WEBUI_PORT=8787

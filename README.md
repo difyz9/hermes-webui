@@ -15,7 +15,7 @@
 ### 1. 准备工作目录
 
 ```bash
-mkdir -p ./workspace
+mkdir -p ./data/{hermes,webui,workspace}
 ```
 
 ### 2. 生成 `.env`
@@ -27,7 +27,7 @@ cp .env.example .env
 按需修改 `.env` 中的以下配置：
 
 - `UID` 和 `GID`：建议改成当前系统用户的 `id -u` / `id -g`
-- `HERMES_WORKSPACE`：默认是仓库内的 `./workspace`，也可以改成你自己的专用目录
+- `HERMES_WORKSPACE`：默认是仓库内的 `./data`，Hermes 的 `hermes/`、`webui/`、`workspace/` 都会建在这里
 - `HERMES_WEBUI_PASSWORD`：如果不是纯本机访问，建议设置强密码
 
 ### 3. 一键启动
@@ -108,7 +108,7 @@ docker pull difyz9/hermes-webui:latest
 创建专用工作目录（不要挂载整个 home 目录）：
 
 ```bash
-mkdir -p ./workspace
+mkdir -p ./data/{hermes,webui,workspace}
 ```
 
 创建 `.env`（macOS/Linux 都建议显式设置 UID/GID）：
