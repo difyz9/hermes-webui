@@ -155,6 +155,7 @@ docker compose --env-file .env -f docker-compose.three-container.yml up -d
 默认方案：
 
 ```bash
+docker compose exec hermes-agent hermes 
 docker compose exec hermes-agent hermes setup
 docker compose exec hermes-agent hermes model
 docker compose exec hermes-agent hermes tools
