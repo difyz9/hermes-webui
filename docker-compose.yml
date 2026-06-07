@@ -7,8 +7,8 @@
 #   Open http://localhost:8787
 #
 # This runs the agent and web UI in separate containers connected via shared
-# Docker volumes. The WebUI installs the agent's Python dependencies from the
-# shared agent source volume at startup.
+# host bind mounts. The WebUI installs the agent's Python dependencies from the
+# shared agent source directory at startup.
 #
 # WHEN TO USE THIS:
 #   - You want isolation between the agent gateway and the WebUI
@@ -26,20 +26,11 @@
 # WebUI's filesystem, install them in the WebUI image — or use a single-
 # container setup where everything lives in one place.
 #
-# NOTE ON VOLUMES:
-#   This file uses named Docker volumes (hermes-home, hermes-agent-src) which
-#   work out of the box on every Docker installation. If you prefer bind mounts
-#   to share an existing host directory:
+# NOTE ON BIND MOUNTS:
+#   This file uses host bind mounts by default so you can access files directly
+#   on your machine. If needed, override paths with env vars in `.env`.
 #
-#     volumes:
-#       hermes-home:
-#         driver: local
-#         driver_opts:
-#           type: none
-#           o: bind
-#           device: /home/youruser/.hermes
-#
-#   When using bind mounts, BOTH containers must mount the same host path,
+#   BOTH containers must mount the same host paths,
 #   AND your host directory must be readable by UID 1000 (the default). Run:
 #     id -u && id -g
 #   to find your host UID/GID, then put them in a .env file:
@@ -58,9 +49,9 @@ services:
       - "127.0.0.1:8642:8642"
     volumes:
       # Persist config, state, sessions, skills, memory across restarts
-      - hermes-home:/home/hermes/.hermes
+      - ${HERMES_HOME_HOST_PATH:-./data/.hermes}:/home/hermes/.hermes
       # Expose agent source so the WebUI can install dependencies from it
-      - hermes-agent-src:/opt/hermes
+      - ${HERMES_AGENT_SRC_HOST_PATH:-./data/herms}:/opt/hermes
     environment:
       - HERMES_HOME=/home/hermes/.hermes
       # Align UID/GID across containers sharing the hermes-home volume.
@@ -90,12 +81,12 @@ services:
       - "127.0.0.1:8787:8787"
     volumes:
       # Same hermes home as the agent — shares config, sessions, state
-      - hermes-home:/home/hermeswebui/.hermes
+      - ${HERMES_HOME_HOST_PATH:-./data/.hermes}:/home/hermeswebui/.hermes
       # Agent source mounted where docker_init.bash expects it.
       # Mounted read-only — the WebUI only reads this volume to install
       # the agent's Python dependencies at startup (`uv pip install`).
       # Read-only enforces that defence-in-depth at the kernel layer.
-      - hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent:ro
+      - ${HERMES_AGENT_SRC_HOST_PATH:-./data/herms}:/home/hermeswebui/.hermes/hermes-agent:ro
       # Workspace directory — browse and edit files from the WebUI.
       # Adapt the host path to your project directory.
       # Override with: HERMES_WORKSPACE=/your/path docker compose up
@@ -130,19 +121,3 @@ services:
 networks:
   hermes-net:
     driver: bridge
-
-volumes:
-  # IMPORTANT — upgrading the agent image:
-  #   The `hermes-agent-src` volume is initialised from the agent image's
-  #   `/opt/hermes` on first `up`, and Docker reuses the volume verbatim on
-  #   later runs — even after `docker pull` of a newer agent image. After
-  #   upgrading the agent image, run:
-  #
-  #     docker compose down
-  #     docker volume rm <project>_hermes-agent-src
-  #     docker compose pull
-  #     docker compose up -d
-  #
-  #   The full procedure (and why) is documented in docs/docker.md.
-  hermes-home:
-  hermes-agent-src:
