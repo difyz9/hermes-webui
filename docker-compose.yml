@@ -50,10 +50,10 @@ services:
       - "127.0.0.1:8642:8642"
     volumes:
       # Persist config, state, sessions, skills, memory across restarts
-      - ${HERMES_WORKSPACE:-./workspace}/hermes/.hermes:/home/hermes/.hermes
+      - ${HERMES_WORKSPACE:-./data}/hermes/.hermes:/home/hermes/.hermes
       # Expose agent source so the WebUI can install dependencies from it
-      - ${HERMES_WORKSPACE:-./workspace}/hermes/src:/opt/hermes
-      - ${HERMES_WORKSPACE:-./workspace}/workspace:/workspace
+      - ${HERMES_WORKSPACE:-./data}/hermes/src:/opt/hermes
+      - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
 
     environment:
       - HERMES_HOME=/home/hermes/.hermes
@@ -84,14 +84,14 @@ services:
       - "127.0.0.1:8787:8787"
     volumes:
       # Same hermes home as the agent — shares config, sessions, state
-      - ${HERMES_WORKSPACE:-./workspace}/webui/.hermes:/home/hermeswebui/.hermes
+      - ${HERMES_WORKSPACE:-./data}/webui/.hermes:/home/hermeswebui/.hermes
       # Agent source mounted where docker_init.bash expects it.
       # Mounted read-only — the WebUI only reads this volume to install
       # the agent's Python dependencies at startup (`uv pip install`).
       # Read-only enforces that defence-in-depth at the kernel layer.
-      - ${HERMES_WORKSPACE:-./workspace}/hermes/src:/home/hermeswebui/.hermes/hermes-agent:ro
+      - ${HERMES_WORKSPACE:-./data}/hermes/src:/home/hermeswebui/.hermes/hermes-agent:ro
       # Workspace directory — browse and edit files from the WebUI.
-      - ${HERMES_WORKSPACE:-./workspace}/workspace:/workspace
+      - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
     environment:
       - HERMES_WEBUI_HOST=0.0.0.0
       - HERMES_WEBUI_PORT=8787
