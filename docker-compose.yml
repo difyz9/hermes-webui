@@ -86,17 +86,17 @@ services:
     volumes:
       # Same hermes home as the agent — shares config, sessions, state
       - ${HERMES_WORKSPACE:-./data}/webui/.hermes:/home/hermeswebui/.hermes
-      # Agent source mounted where docker_init.bash expects it.
-      # Mounted read-only — the WebUI only reads this volume to install
-      # the agent's Python dependencies at startup (`uv pip install`).
-      # Read-only enforces that defence-in-depth at the kernel layer.
-      - ${HERMES_WORKSPACE:-./data}/hermes/src:/home/hermeswebui/.hermes/hermes-agent:ro
+      # Agent source mounted to a standalone path. Avoid nested bind mounts
+      # under /home/hermeswebui/.hermes because they can be unreliable on
+      # Docker Desktop (parent+child bind overlap).
+      - ${HERMES_WORKSPACE:-./data}/hermes/src:/opt/hermes-agent-src:ro
       # Workspace directory — browse and edit files from the WebUI.
       - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
     environment:
       - HERMES_WEBUI_HOST=0.0.0.0
       - HERMES_WEBUI_PORT=8787
       - HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui
+      - HERMES_WEBUI_AGENT_DIR=/opt/hermes-agent-src
       # Match your host user's UID/GID for correct file permissions.
       # In two-container setups the WebUI auto-detects UID/GID from the shared
       # hermes-home volume, but you can override explicitly if needed (#668):
