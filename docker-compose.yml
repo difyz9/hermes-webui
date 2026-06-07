@@ -53,6 +53,7 @@ services:
       - ${HERMES_WORKSPACE:-./data}/hermes/.hermes:/home/hermes/.hermes
       # Expose agent source so the WebUI can install dependencies from it
       - ${HERMES_WORKSPACE:-./data}/hermes/src:/opt/hermes
+      - ${HERMES_WORKSPACE:-./data}/hermes/data:/opt/data
       - ${HERMES_WORKSPACE:-./data}/workspace:/workspace
 
     environment:
