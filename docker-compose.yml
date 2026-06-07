@@ -84,8 +84,9 @@ services:
     ports:
       - "127.0.0.1:8787:8787"
     volumes:
-      # Same hermes home as the agent — shares config, sessions, state
-      - ${HERMES_WORKSPACE:-./data}/webui/.hermes:/home/hermeswebui/.hermes
+      # Share the exact same Hermes home as the agent so setup/config/state
+      # are consistent and don't need to be reconfigured in WebUI.
+      - ${HERMES_WORKSPACE:-./data}/hermes/.hermes:/home/hermeswebui/.hermes
       # Agent source mounted to a standalone path. Avoid nested bind mounts
       # under /home/hermeswebui/.hermes because they can be unreliable on
       # Docker Desktop (parent+child bind overlap).

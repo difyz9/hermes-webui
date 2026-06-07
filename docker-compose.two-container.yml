@@ -98,7 +98,9 @@ services:
       # Workspace directory — browse and edit files from the WebUI.
       # Adapt the host path to your project directory.
       # Override with: HERMES_WORKSPACE=/your/path docker compose up
-      # ${HOME} is used rather than `~` so the default resolves the same way
+      # ${HOME} is used rather than `~` so the default resolv
+      
+      es the same way
       # across Linux, macOS, WSL2, and Docker Desktop on Windows.
       - ${HERMES_WORKSPACE:-${HOME}/workspace}:/workspace
     environment:
